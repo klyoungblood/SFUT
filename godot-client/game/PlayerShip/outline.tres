@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://deeffwqoafpkc"]
+
+[ext_resource type="Shader" uid="uid://cwe0g1wuhdom7" path="res://game/PlayerShip/outline.gdshader" id="1_njl8i"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_njl8i")
+shader_parameter/outline_color = Color(0, 0, 0, 1)
+shader_parameter/outline_width = 1.0000000475
+shader_parameter/fade_start = 10.0
+shader_parameter/fade_end = 30.0
