@@ -4,8 +4,11 @@ class_name PlayerCharacterShip
 
 var MOUSE_SENSITIVITY = 0.15
 var JOY_SENSITIVITY = 3.5
+var sniping := false
 
 const SPEED = 10.0
+
+signal signal_hit_success(headshot)
 
 @export var health_system: HealthSystem
 
@@ -31,8 +34,12 @@ func _ready():
 func _input(event):
 	if is_multiplayer_authority():
 		if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-			rotate_object_local(Vector3(1,0,0), deg_to_rad(event.relative.y * MOUSE_SENSITIVITY * -1))
-			rotate_object_local(Vector3(0,1,0), deg_to_rad(event.relative.x * MOUSE_SENSITIVITY * -1))
+			if sniping:
+				rotate_object_local(Vector3(1,0,0), deg_to_rad(event.relative.y * MOUSE_SENSITIVITY * 0.5 * -1))
+				rotate_object_local(Vector3(0,1,0), deg_to_rad(event.relative.x * MOUSE_SENSITIVITY * 0.5 * -1))
+			else:
+				rotate_object_local(Vector3(1,0,0), deg_to_rad(event.relative.y * MOUSE_SENSITIVITY * -1))
+				rotate_object_local(Vector3(0,1,0), deg_to_rad(event.relative.x * MOUSE_SENSITIVITY * -1))
 			
 		if Input.is_action_just_pressed("ui_cancel"):
 			if Input.get_mouse_mode() == Input.MOUSE_MODE_VISIBLE:
@@ -48,10 +55,16 @@ func _physics_process(_delta):
 		var input_fr = Input.get_axis("move_forward", "move_back")
 		var input_roll = Input.get_axis("roll_left", "roll_right")
 		
-		# yaw up/down
-		rotate_object_local(Vector3(1,0,0), deg_to_rad(input_look.y * JOY_SENSITIVITY))
-		# pitch left/right
-		rotate_object_local(Vector3(0,1,0), deg_to_rad(input_look.x * JOY_SENSITIVITY * -1))
+		if sniping:
+			# yaw up/down
+			rotate_object_local(Vector3(1,0,0), deg_to_rad(input_look.y * JOY_SENSITIVITY * 0.5))
+			# pitch left/right
+			rotate_object_local(Vector3(0,1,0), deg_to_rad(input_look.x * JOY_SENSITIVITY * 0.5 * -1))
+		else:
+			# yaw up/down
+			rotate_object_local(Vector3(1,0,0), deg_to_rad(input_look.y * JOY_SENSITIVITY))
+			# pitch left/right
+			rotate_object_local(Vector3(0,1,0), deg_to_rad(input_look.x * JOY_SENSITIVITY * -1))
 		# roll left/right
 		rotate_object_local(Vector3(0,0,1), deg_to_rad(input_roll * JOY_SENSITIVITY) * 0.5)
 		
@@ -61,9 +74,42 @@ func _physics_process(_delta):
 		velocity = SPEED * direction
 
 		move_and_slide()
+		
+		# change weapons
+		if Input.is_action_just_pressed("weapon_up"):
+			%WeaponManager.weaponNext()
+			
+		if Input.is_action_just_pressed("weapon_down"):
+			%WeaponManager.weaponLast()
+		
+		# Fire!
+		if Input.is_action_pressed("weapon_shoot") and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+			%ShootManager.shoot()
+			
+		# Alt Fire like it's UT99!
+		if isSniperEquipped() and Input.is_action_pressed("weapon_aim") and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+			$Camera3D.current=false
+			%Gunports/Center.current=true
+			sniping = true
+		else:	
+			$Camera3D.current=true
+			%Gunports/Center.current=false
+			sniping = false
+		
+		if !isSniperEquipped() and Input.is_action_pressed("weapon_aim") and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+			%ShootManager.shoot(true)
+			
+func isSniperEquipped():
+	var wm = %WeaponManager
+	var cW = wm.cW
+	if cW.altmode == cW.altModes.SNIPER:
+		return true
+	else:
+		return false
 
 func update_nameplate(username: String):
 	%Nameplate.text = username
+	$PlayerUI.update_nameplate(username)
 
 func hitscanHit(damageVal : float, _hitscanDir : Vector3, _hitscanPos : Vector3, source = 1):
 	@warning_ignore("narrowing_conversion")
@@ -77,3 +123,6 @@ func projectileHit(damageVal : float, _hitscanDir : Vector3, source = 1):
 	var _damage_successful = health_system.damage(damageVal, source)
 	#if damage_successful:
 		#Hub.emit_signal('hit')
+
+func _on_signal_hit_success() -> void:
+	pass # Replace with function body.

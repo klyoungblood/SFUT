@@ -3,8 +3,8 @@ extends Node3D
 var cW
 var cWM : Node3D
 
-@onready var cameraHolder : Node3D = %CameraHolder
-@onready var playChar : CharacterBody3D = $"../../../../.."
+#@onready var cameraHolder : Node3D = %CameraHolder
+@onready var playChar : CharacterBody3D = get_parent().get_parent()
 @onready var animPlayer : AnimationPlayer = %AnimationPlayer
 @onready var weapM : Node3D = %WeaponManager
 
@@ -13,11 +13,6 @@ func getCurrentWeapon(currWeap, currWeapModel):
 	cW = currWeap
 	cWM = currWeapModel
 	
-func _process(delta: float):
-	if cW != null and cWM != null:
-		weaponTilt(playChar.inputDirection, delta)
-		weaponSway(cameraHolder.mouseInput, delta)
-		weaponBob(playChar.velocity.length(),delta)
 		
 func weaponTilt(playCharInput, delta):
 	#rotate weapon model on the z axis depending on the player character direction orientation (left or right)

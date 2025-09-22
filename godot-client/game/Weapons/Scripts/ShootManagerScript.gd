@@ -3,42 +3,38 @@ extends Node3D
 var cW #current weapon
 var pointOfCollision : Vector3 = Vector3.ZERO
 
+var leftLast := false
+
 @onready var weapM : WeaponManager = %WeaponManager #weapon manager
 
 func getCurrentWeapon(currWeap):
 	#get current weapon resources
 	cW = currWeap
 	
-func shoot():
-	if cW.canShoot and (
-	#magazine isn't empty, and has >= ammo than the number of projectiles required for a shot
-	(cW.totalAmmoInMag > 0 and cW.totalAmmoInMag >= cW.nbProjShotsAtSameTime)
-	or 
-	#has all ammos in the magazine, and number of ammo is positive
-	(cW.allAmmoInMag and weapM.ammoManager.ammoDict[cW.ammoType] > 0 and
-	#has >= ammo than the number of projectiles required for a shot
-	weapM.ammoManager.ammoDict[cW.ammoType] >= cW.nbProjShotsAtSameTime)
-	) and cW.canReload:
+func shoot(altfire=false):
+	if cW.canShoot and weapM.ammoManager.ammoDict[cW.ammoType] > 0:
 		cW.canShoot = false
+		var nshots = cW.nbProjShots
 		
 		#number of successive shots (for example if 3, the weapon will shot 3 times in a row)
-		for i in range(cW.nbProjShots):
+		for i in range(nshots):
 			#same conditions has before, are checked before every shot
-			if ((cW.totalAmmoInMag > 0 and cW.totalAmmoInMag >= cW.nbProjShotsAtSameTime) 
-			or (cW.allAmmoInMag and weapM.ammoManager.ammoDict[cW.ammoType] > 0) and 
-			weapM.ammoManager.ammoDict[cW.ammoType] >= cW.nbProjShotsAtSameTime):
-				
+			if weapM.ammoManager.ammoDict[cW.ammoType] > 0:
 				weapM.weaponSoundManagement(cW.shootSound, cW.shootSoundSpeed)
-				
-				if cW.shootAnimName != "":
-					weapM.animManager.playModelAnimation("ShootAnim%s" % cW.weaponName, cW.shootAnimSpeed, true)
-				else:
-					print("%s doesn't have a shoot animation" % cW.weaponName)
-					
+							
 				#number projectiles shots at the same time (for example, 
 				#a shotgun shell is constituted of ~ 20 pellets that are spread across the target, 
 				#so 20 projectiles shots at the same time)
-				for j in range(0, cW.nbProjShotsAtSameTime):
+				weapM.ammoManager.ammoDict[cW.ammoType] -= 1
+				
+				var nbullets = cW.nbProjShotsAtSameTime
+				
+				# altfire on the machine guns, both barrels at once, double ammo usage
+				if altfire and cW.altmode==cW.altModes.BOTHBARRELS:
+					weapM.ammoManager.ammoDict[cW.ammoType] -= 1
+					nbullets *=2
+				
+				for j in range(0, nbullets):
 					if cW.allAmmoInMag: weapM.ammoManager.ammoDict[cW.ammoType] -= 1
 					else: cW.totalAmmoInMag -= 1
 						
@@ -50,9 +46,7 @@ func shoot():
 					elif cW.type == cW.types.PROJECTILE: projectileShot(pointOfCollision)
 					
 				weapM.displayMuzzleFlash()
-				weapM.cameraRecoilHolder.setRecoilValues(cW.baseRotSpeed, cW.targetRotSpeed)
-				weapM.cameraRecoilHolder.addRecoil(cW.recoilVal)
-				
+
 				await get_tree().create_timer(cW.timeBetweenShots).timeout
 				
 			else:
@@ -61,27 +55,26 @@ func shoot():
 		cW.canShoot = true
 
 func getCameraPOV():  
-	var camera : Camera3D = %Camera
+	var gunport
+	if cW.port == cW.ports.CENTER:
+		gunport = %Gunports/Center
+	elif cW.port == cW.ports.SIDE and leftLast:
+		gunport = %Gunports/Right
+		leftLast = false
+	elif cW.port == cW.ports.SIDE:
+		gunport = %Gunports/Left
+		leftLast = true
+	
 	var _window : Window = get_window()
 	var viewport : Vector2i
-	
-	# NOTE: TODO fix this AD.
-	#match viewport to window size, to ensure that the raycast goes in the right direction
-	#match window.content_scale_mode:
-		#window.CONTENT_SCALE_MODE_VIEWPORT:
-			#viewport = window.content_scale_size
-		#window.CONTENT_SCALE_MODE_CANVAS_ITEMS:
-			#viewport = window.content_scale_size
-		#window.CONTENT_SCALE_MODE_DISABLED:
-			#viewport = window.get_size()
-#
+
 	viewport = get_viewport().get_visible_rect().size
 			
 	#Start raycast in camera position, and launch it in camera direction 
-	var raycastStart = camera.project_ray_origin(viewport/2)
+	var raycastStart = gunport.project_ray_origin(viewport/2)
 	var raycastEnd
-	if cW.type == cW.types.HITSCAN: raycastEnd = raycastStart + camera.project_ray_normal(viewport/2) * cW.maxRange 
-	if cW.type == cW.types.PROJECTILE: raycastEnd = raycastStart + camera.project_ray_normal(viewport/2) * 280
+	if cW.type == cW.types.HITSCAN: raycastEnd = raycastStart + gunport.project_ray_normal(viewport/2) * cW.maxRange 
+	if cW.type == cW.types.PROJECTILE: raycastEnd = raycastStart + gunport.project_ray_normal(viewport/2) * 280
 	
 	#Create intersection space to contain possible collisions 
 	var newIntersection = PhysicsRayQueryParameters3D.create(raycastStart, raycastEnd)

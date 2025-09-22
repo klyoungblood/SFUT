@@ -28,16 +28,16 @@ var rng = RandomNumberGenerator.new()
 @export var weapon_wheel_up_action : String
 @export var weapon_wheel_down_action : String
 
-@onready var playChar : PlayerCharacter = $"../../../.."
-@onready var cameraHolder : Node3D = %CameraHolder
-@onready var cameraRecoilHolder : Node3D = %CameraRecoilHolder
-@onready var camera : Camera3D = %Camera
+@onready var playChar : PlayerCharacterShip = get_parent()
+#@onready var cameraHolder : Node3D = %CameraHolder
+#@onready var cameraRecoilHolder : Node3D = %CameraRecoilHolder
+#@onready var camera : Camera3D = %Camera
 @onready var weaponContainer : Node3D = %WeaponContainer
 @onready var shootManager : Node3D = %ShootManager
-@onready var reloadManager : Node3D = %ReloadManager
+# @onready var reloadManager : Node3D = %ReloadManager
 @onready var ammoManager : Node3D = %AmmunitionManager
 @onready var animPlayer : AnimationPlayer = %AnimationPlayer
-@onready var animManager : Node3D = %AnimationManager
+# @onready var animManager : Node3D = %AnimationManager
 @onready var audioManager : PackedScene = preload("res://game/Weapons/Misc/Scenes/AudioManagerScene.tscn")
 @onready var bulletDecal : PackedScene = preload("res://game/Weapons/Misc/Scenes/BulletDecalScene.tscn")
 #@onready var hud : CanvasLayer = %HUD
@@ -85,9 +85,9 @@ func exitWeapon(nextWeapon : int):
 		if cW.canShoot: cW.canShoot = false
 		if cW.canReload: cW.canReload = false
 		
-		if cW.unequipAnimName != "":
-			animManager.playModelAnimation("UnequipAnim%s" % cW.weaponName, cW.unequipAnimSpeed, false)
-		await get_tree().create_timer(cW.unequipTime).timeout
+#		if cW.unequipAnimName != "":
+#			animManager.playModelAnimation("UnequipAnim%s" % cW.weaponName, cW.unequipAnimSpeed, false)
+#		await get_tree().create_timer(cW.unequipTime).timeout
 		
 		cWM.visible = false
 		
@@ -103,15 +103,13 @@ func enterWeapon(nextWeapon : int):
 	
 	
 	shootManager.getCurrentWeapon(cW)
-	reloadManager.getCurrentWeapon(cW)
-	animManager.getCurrentWeapon(cW, cWM)
 	
 	weaponSoundManagement(cW.equipSound, cW.equipSoundSpeed)
 	
 	animPlayer.playback_default_blend_time = cW.animBlendTime
 	
-	if cW.equipAnimName != "":
-		animManager.playModelAnimation("EquipAnim%s" % cW.weaponName, cW.equipAnimSpeed, false)
+	#if cW.equipAnimName != "":
+	#	animManager.playModelAnimation("EquipAnim%s" % cW.weaponName, cW.equipAnimSpeed, false)
 	await get_tree().create_timer(cW.equipTime).timeout
 	
 	if !cW.canShoot: cW.canShoot = true
@@ -120,46 +118,27 @@ func enterWeapon(nextWeapon : int):
 	canChangeWeapons = true
 	
 func _process(_delta : float):
-	if cW != null and cWM != null and canUseWeapon:
-		weaponInputs()
-		reloadManager.autoReload()
+#	if cW != null and cWM != null and canUseWeapon:
+#		weaponInputs()
+#		reloadManager.autoReload()
 		
 	displayStats()
 	
-#func weaponInputs():
-	#if Input.is_action_pressed(shoot_action): shootManager.shoot()
-			#
-	#if Input.is_action_just_pressed(reload_action): reloadManager.reload()
-	#
-	#if Input.is_action_just_pressed(weapon_wheel_up_action):
-		#if canChangeWeapons and cW.canShoot and cW.canReload:
-			#weaponIndex = min(weaponIndex + 1, weaponStack.size() - 1) #from first element of weapon stack to last element 
-			#changeWeapon(weaponStack[weaponIndex])
-			#
-	#if Input.is_action_just_pressed(weapon_wheel_down_action):
-		#if canChangeWeapons and cW.canShoot and cW.canReload:
-			#weaponIndex = max(weaponIndex - 1, 0) #from last element of weapon stack to first element 
-			#changeWeapon(weaponStack[weaponIndex])
-		
-func weaponInputs():
-	if playChar.player_input.is_weapon_shoot: shootManager.shoot()
-	if playChar.player_input.is_weapon_reload: reloadManager.reload()
-	
-	if playChar.player_input.is_weapon_down:
-		if canChangeWeapons and cW.canShoot and cW.canReload:
-			weaponIndex = min(weaponIndex + 1, weaponStack.size() - 1) #from first element of weapon stack to last element 
-			changeWeapon(weaponStack[weaponIndex])
+func weaponNext():
+	if canChangeWeapons and cW.canShoot and cW.canReload:
+		weaponIndex = min(weaponIndex + 1, weaponStack.size() - 1) #from first element of weapon stack to last element 
+		changeWeapon(weaponStack[weaponIndex])
 			
-	if playChar.player_input.is_weapon_up:
-		if canChangeWeapons and cW.canShoot and cW.canReload:
-			weaponIndex = max(weaponIndex - 1, 0) #from last element of weapon stack to first element 
-			changeWeapon(weaponStack[weaponIndex])
+func weaponLast():
+	if canChangeWeapons and cW.canShoot and cW.canReload:
+		weaponIndex = max(weaponIndex - 1, 0) #from last element of weapon stack to first element 
+		changeWeapon(weaponStack[weaponIndex])
 
 func displayStats():
 	#hud.displayWeaponStack(weaponStack.size())
-	playChar.player_ui.displayWeaponName(cW.weaponName)
-	playChar.player_ui.displayTotalAmmoInMag(cW.totalAmmoInMag, cW.nbProjShotsAtSameTime)
-	playChar.player_ui.displayTotalAmmo(ammoManager.ammoDict[cW.ammoType], cW.nbProjShotsAtSameTime)
+	if cW:
+		%PlayerUI.displayWeaponName(cW.weaponName)
+		%PlayerUI.displayTotalAmmo(ammoManager.ammoDict[cW.ammoType], cW.nbProjShotsAtSameTime)
 
 func changeWeapon(nextWeapon : int):
 	if canChangeWeapons and cW.canShoot and cW.canReload:

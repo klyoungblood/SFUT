@@ -11,9 +11,10 @@ point_count = 3
 
 [resource]
 script = ExtResource("2_ivqsi")
-weaponName = "SniperRifle"
+weaponName = "Coilgun"
 weaponId = 2
 type = 1
+altmode = 2
 animBlendTime = 0.2
 equipAnimName = "EquipAnimSniperRifle"
 unequipAnimName = "UnequipAnimSniperRifle"
@@ -33,10 +34,10 @@ canAutoShoot = true
 nbProjShotsAtSameTime = 1
 nbProjShots = 1
 maxRange = 490.0
-damagePerProj = 250.0
+damagePerProj = 120.0
 damageDropoff = SubResource("Curve_eo1mu")
 headshotDamageMult = 4.0
-timeBetweenShots = 0.95
+timeBetweenShots = 2.0
 reloadTime = 2.05
 baseRotSpeed = 5.0
 targetRotSpeed = 9.0

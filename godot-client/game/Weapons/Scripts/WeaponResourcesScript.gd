@@ -14,6 +14,18 @@ enum types
 }
 @export var type = types.NULL 
 
+enum ports
+{
+	SIDE, CENTER, MISSILE
+}
+@export var port = ports.CENTER
+
+enum altModes
+{
+	NULL, BOTHBARRELS, SNIPER
+}
+@export var altmode = altModes.NULL
+
 @export_group("Animation variables")
 @export var animBlendTime : float
 @export var equipAnimName : String

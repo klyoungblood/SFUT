@@ -64,6 +64,10 @@ func _process(_delta: float) -> void:
 		%Menu.show()
 
 	%LabelFPSCounter.text = 'FPS: ' + str(Engine.get_frames_per_second())
+#	%LabelPlayername.text = get_parent().username
+
+func update_nameplate(username: String):
+	%LabelPlayerName.text = username
 
 func _on_hurt():
 	%HurtSound.play()

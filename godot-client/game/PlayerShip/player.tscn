@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://drvyof2stf7w4"]
+[gd_scene load_steps=19 format=3 uid="uid://drvyof2stf7w4"]
 
 [ext_resource type="ArrayMesh" uid="uid://2db0a3rld0wg" path="res://game/PlayerShip/erinys.obj" id="1_hkeyt"]
 [ext_resource type="Script" uid="uid://cxjyts4vu4ito" path="res://game/PlayerShip/player.gd" id="1_ug5jj"]
@@ -6,6 +6,16 @@
 [ext_resource type="Material" uid="uid://deeffwqoafpkc" path="res://game/PlayerShip/outline.tres" id="3_ks2r7"]
 [ext_resource type="PackedScene" uid="uid://bodmr74jwgi5g" path="res://game/PlayerCharacter/UI/player_ui.tscn" id="4_pwx03"]
 [ext_resource type="PackedScene" uid="uid://qsh5m8pulul5" path="res://game/PlayerCharacter/health_system.tscn" id="5_pwx03"]
+[ext_resource type="Script" uid="uid://pufyqjrkl22t" path="res://game/Weapons/Scripts/ShootManagerScript.gd" id="7_megfp"]
+[ext_resource type="Script" uid="uid://d2jpda3mq5jpa" path="res://game/Weapons/Scripts/WeaponManagerScript.gd" id="7_t35fc"]
+[ext_resource type="Script" uid="uid://bnhfyt5sl8jcd" path="res://game/Weapons/Scripts/WeaponResourcesScript.gd" id="8_03yw2"]
+[ext_resource type="Resource" uid="uid://j42d6dl8qkaj" path="res://game/Weapons/Resources/PistolWeaponResources.tres" id="9_3l1wq"]
+[ext_resource type="Resource" uid="uid://b63lj0c7tash0" path="res://game/Weapons/Resources/SniperRifleWeaponResources.tres" id="10_xqphn"]
+[ext_resource type="Script" uid="uid://bcka80usfl4am" path="res://game/Weapons/Scripts/WeaponSlotScript.gd" id="11_opob7"]
+[ext_resource type="ArrayMesh" uid="uid://bbpjmshwnuqrq" path="res://game/assets/weapons/low_poly_pistol/low_poly_pistol_mesh.res" id="12_rcvn8"]
+[ext_resource type="PackedScene" uid="uid://s2xpowgn45nd" path="res://game/assets/weapons/sniper/sniper_clean.glb" id="13_3bybm"]
+[ext_resource type="Script" uid="uid://b45mr122adhlv" path="res://game/Weapons/Scripts/Ammunition/AmmunitionManagerScript.gd" id="16_sujr4"]
+[ext_resource type="PackedScene" uid="uid://ob7g0u3halqf" path="res://game/Weapons/Misc/Scenes/MuzzleFlash.tscn" id="22_ai07g"]
 
 [sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_pwx03"]
 properties/0/path = NodePath(".:position")
@@ -30,7 +40,7 @@ properties/5/replication_mode = 1
 [sub_resource type="SphereShape3D" id="SphereShape3D_6oaqr"]
 radius = 0.85
 
-[node name="Player" type="CharacterBody3D" node_paths=PackedStringArray("health_system")]
+[node name="PlayerShip" type="CharacterBody3D" node_paths=PackedStringArray("health_system")]
 script = ExtResource("1_ug5jj")
 health_system = NodePath("HealthSystem")
 
@@ -72,3 +82,95 @@ health = 200
 regen_increment = 4
 
 [node name="PlayerUI" parent="." instance=ExtResource("4_pwx03")]
+unique_name_in_owner = true
+
+[node name="Gunports" type="Node3D" parent="."]
+unique_name_in_owner = true
+
+[node name="Center" type="Camera3D" parent="Gunports"]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0, -0.35, 0.85)
+fov = 30.0
+
+[node name="Left" type="Camera3D" parent="Gunports"]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.15, -0.15, 0.85)
+fov = 30.0
+
+[node name="Right" type="Camera3D" parent="Gunports"]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.15, -0.15, 0.85)
+fov = 30.0
+
+[node name="WeaponManager" type="Node3D" parent="." node_paths=PackedStringArray("startWeapons")]
+unique_name_in_owner = true
+script = ExtResource("7_t35fc")
+weaponResources = Array[ExtResource("8_03yw2")]([ExtResource("9_3l1wq"), ExtResource("10_xqphn")])
+startWeapons = [NodePath("WeaponContainer/Pistol"), NodePath("WeaponContainer/SniperRifle")]
+shoot_action = "weapon_shoot"
+reload_action = "weapon_reload"
+weapon_wheel_up_action = "weapon_up"
+weapon_wheel_down_action = "weapon_down"
+
+[node name="WeaponContainer" type="Node3D" parent="WeaponManager"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.67602e-09, -0.0115472, -0.038343)
+
+[node name="Pistol" type="Node3D" parent="WeaponManager/WeaponContainer" node_paths=PackedStringArray("model", "attackPoint", "muzzleFlashSpawner")]
+transform = Transform3D(-0.14999938, 0.259808, 6.337954e-07, 0.259808, 0.14999938, 0, -3.8027568e-07, 6.586605e-07, -0.25, 0.2, -0.4, -0.151)
+script = ExtResource("11_opob7")
+model = NodePath(".")
+weaponId = 1
+attackPoint = NodePath("PistolModel/PistolAttackPoint")
+muzzleFlashSpawner = NodePath("PistolModel/PistolMuzzleFlashSpawner")
+
+[node name="PistolModel" type="Node3D" parent="WeaponManager/WeaponContainer/Pistol"]
+transform = Transform3D(1, 0, 2.84217e-14, 0, 1, 0, -2.84217e-14, 0, 1, 0, 0, 0)
+visible = false
+
+[node name="pistol_1" type="MeshInstance3D" parent="WeaponManager/WeaponContainer/Pistol/PistolModel"]
+transform = Transform3D(-100, 8.742278e-06, 3.8213708e-13, 0, -4.371139e-06, 100, 8.742278e-06, 100, 4.371139e-06, 0, -0.15, 0)
+layers = 4
+mesh = ExtResource("12_rcvn8")
+skeleton = NodePath("")
+
+[node name="PistolAttackPoint" type="Marker3D" parent="WeaponManager/WeaponContainer/Pistol/PistolModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.78936e-08, 0.154984, 0.541926)
+
+[node name="PistolMuzzleFlashSpawner" type="Marker3D" parent="WeaponManager/WeaponContainer/Pistol/PistolModel"]
+transform = Transform3D(1, -2.7830284e-12, -4.5474735e-13, -2.7830281e-12, 1, -1.1368684e-13, 0, 0, 1, 0, 0.065256685, 0.7325743)
+
+[node name="SniperRifle" type="Node3D" parent="WeaponManager/WeaponContainer" node_paths=PackedStringArray("model", "attackPoint", "muzzleFlashSpawner")]
+transform = Transform3D(-1, 0, 2.5351817e-06, 0, 1, 0, -2.5351817e-06, 0, -1, 0.208089, -0.137525, -0.165069)
+script = ExtResource("11_opob7")
+model = NodePath(".")
+weaponId = 2
+attackPoint = NodePath("SniperRifleModel/AttackPointSniper")
+muzzleFlashSpawner = NodePath("SniperRifleModel/MuzzlePointSniper")
+
+[node name="SniperRifleModel" type="Node3D" parent="WeaponManager/WeaponContainer/SniperRifle"]
+transform = Transform3D(-1, 0, 8.742278e-08, 0, 1, 0, -8.742278e-08, 0, -1, 0, 0, 0)
+visible = false
+
+[node name="sniper_clean" parent="WeaponManager/WeaponContainer/SniperRifle/SniperRifleModel" instance=ExtResource("13_3bybm")]
+transform = Transform3D(-3.9340193e-08, 0, 0.9, 0, 0.9, 0, -0.9, 0, -3.9340193e-08, -0.13485868, -0.026861042, 0.16460857)
+
+[node name="sniper_mesh" type="MeshInstance3D" parent="WeaponManager/WeaponContainer/SniperRifle/SniperRifleModel"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
+visible = false
+
+[node name="AttackPointSniper" type="Marker3D" parent="WeaponManager/WeaponContainer/SniperRifle/SniperRifleModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.296401e-06, 0.054981336, -0.4696825)
+
+[node name="MuzzlePointSniper" type="Marker3D" parent="WeaponManager/WeaponContainer/SniperRifle/SniperRifleModel"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.13207726, 0.057424277, -0.6495426)
+
+[node name="ShootManager" type="Node3D" parent="WeaponManager"]
+unique_name_in_owner = true
+script = ExtResource("7_megfp")
+
+[node name="AmmunitionManager" type="Node3D" parent="WeaponManager"]
+unique_name_in_owner = true
+script = ExtResource("16_sujr4")
+
+[node name="MuzzleFlash" parent="WeaponManager" instance=ExtResource("22_ai07g")]
+unique_name_in_owner = true
+
+[connection signal="signal_hit_success" from="." to="." method="_on_signal_hit_success"]
